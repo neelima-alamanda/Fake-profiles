@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Connected Successfully</title>
+  <style>
+    body {
+      margin: 0;
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: linear-gradient(135deg, #1c1c1c, #2e2e2e);
+      font-family: Arial, sans-serif;
+      color: white;
+      flex-direction: column;
+      text-align: center;
+    }
+    h1 { margin-bottom: 20px; }
+    button {
+      background-color: #6ec7e0;
+      color: black;
+      padding: 12px 25px;
+      border: none;
+      border-radius: 10px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+    button:hover { background-color: #58b1ca; }
+  </style>
+</head>
+<body>
+  <h1 id="message">Connected Successfully!</h1>
+  <button id="goBtn">Go to Platform</button>
+
+  <script>
+    const urlParams = new URLSearchParams(window.location.search);
+    const platform = urlParams.get('platform') || 'default';
+    const message = document.getElementById("message");
+    const goBtn = document.getElementById("goBtn");
+
+    let platformName = "";
+    let platformUrl = "/";
+
+    switch(platform){
+      case 'instagram':
+        platformName = "Instagram";
+        platformUrl = "https://www.instagram.com";
+        break;
+      case 'facebook':
+        platformName = "Facebook";
+        platformUrl = "https://www.facebook.com";
+        break;
+      case 'snapchat':
+        platformName = "Snapchat";
+        platformUrl = "https://www.snapchat.com";
+        break;
+      case 'twitter':
+        platformName = "Twitter";
+        platformUrl = "https://twitter.com";
+        break;
+      default:
+        platformName = "Home";
+        platformUrl = "/";
+    }
+
+    message.innerText = `You are now connected to ${platformName}!`;
+    goBtn.innerText = `Go to ${platformName}`;
+    goBtn.onclick = () => { window.location.href = platformUrl; };
+  </script>
+</body>
+</html>

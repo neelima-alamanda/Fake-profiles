@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>APAR Authentication</title>
+  <style>
+    * { box-sizing: border-box; margin:0; padding:0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+    body { background-color:#000; color:white; display:flex; justify-content:center; align-items:center; height:100vh; }
+    .container { background-color:#1a1a1a; padding:30px; border-radius:15px; box-shadow:0 0 15px rgba(255,255,255,0.05); width:320px; }
+    h2 { text-align:center; margin-bottom:15px; font-weight:bold; }
+    form { display:flex; flex-direction:column; margin-bottom:25px; }
+    input { padding:10px; margin-bottom:10px; border:none; border-radius:5px; background-color:#333; color:white; }
+    button { background-color:#6ec7e0; color:black; padding:10px; border:none; border-radius:5px; font-weight:bold; cursor:pointer; transition:0.3s; }
+    button:hover { background-color:#58b1ca; }
+    #otpSection { display:none; }
+    #message { text-align:center; margin-top:10px; color:#ffcc00; }
+    #actionToggle { text-align:center; margin-bottom:10px; cursor:pointer; color:#aaa; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2 id="formTitle">Signup</h2>
+    <div id="actionToggle">Already have an account? <span style="color:#6ec7e0;" onclick="toggleAction()">Login</span></div>
+
+    <form id="authForm">
+      <input type="text" id="apar_id" placeholder="Enter APAAR ID" />
+      <input type="text" id="phone" placeholder="Enter Phone Number" />
+      <input type="date" id="dob" placeholder="Enter DOB" />
+      <button type="button" id="sendOtpBtn">Send OTP</button>
+
+      <div id="otpSection">
+        <input type="text" id="otp" placeholder="Enter OTP" />
+        <button type="button" id="verifyOtpBtn">Verify OTP</button>
+      </div>
+    </form>
+
+    <p id="message"></p>
+  </div>
+
+  <script>
+    let action = "signup"; // default action
+    const sendOtpBtn = document.getElementById("sendOtpBtn");
+    const verifyOtpBtn = document.getElementById("verifyOtpBtn");
+    const otpSection = document.getElementById("otpSection");
+    const message = document.getElementById("message");
+    const formTitle = document.getElementById("formTitle");
+    const dobInput = document.getElementById("dob");
+    const actionToggle = document.getElementById("actionToggle");
+
+    // get platform from query string
+    const urlParams = new URLSearchParams(window.location.search);
+    const platform = urlParams.get("platform");
+
+    function toggleAction() {
+      action = action === "signup" ? "login" : "signup";
+      formTitle.innerText = action === "signup" ? "Signup" : "Login";
+      dobInput.style.display = action === "signup" ? "block" : "none";
+      actionToggle.innerHTML = action === "signup" ? 
+        'Already have an account? <span style="color:#6ec7e0;" onclick="toggleAction()">Login</span>' : 
+        'No account? <span style="color:#6ec7e0;" onclick="toggleAction()">Signup</span>';
+      message.innerText = "";
+      otpSection.style.display = "none";
+    }
+
+    sendOtpBtn.onclick = async () => {
+      const apar_id = document.getElementById("apar_id").value.trim();
+      const phone = document.getElementById("phone").value.trim();
+      const dob = document.getElementById("dob").value;
+
+      if (!/^\d{12}$/.test(apar_id)) { message.innerText = "APAR ID must be 12 digits"; return; }
+      if (!/^\d{10}$/.test(phone)) { message.innerText = "Phone number must be 10 digits"; return; }
+      if (action === "signup" && (!dob || new Date().getFullYear() - new Date(dob).getFullYear() < 15)) {
+        message.innerText = "Age must be at least 15";
+        return;
+      }
+
+      const res = await fetch("/send-otp", {
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body: JSON.stringify({ apar_id, phone, dob, action })
+      });
+      const data = await res.json();
+      message.innerText = data.message;
+      if(data.success) otpSection.style.display = "block";
+    };
+
+    verifyOtpBtn.onclick = async () => {
+      const apar_id = document.getElementById("apar_id").value.trim();
+      const phone = document.getElementById("phone").value.trim();
+      const otp = document.getElementById("otp").value.trim();
+      const dob = document.getElementById("dob").value;
+
+      const res = await fetch("/verify-otp", {
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body: JSON.stringify({ apar_id, phone, otp, dob, action })
+      });
+      const data = await res.json();
+      message.innerText = data.message;
+
+      if(data.success){
+        otpSection.style.display = "none";
+        sendOtpBtn.disabled = true;
+        document.getElementById("apar_id").disabled = true;
+        document.getElementById("phone").disabled = true;
+        if(action === "signup") document.getElementById("dob").disabled = true;
+
+        // redirect after success
+        const redirectMap = {
+          instagram: "https://www.instagram.com/",
+          facebook: "https://www.facebook.com/",
+          youtube: "https://www.youtube.com/",
+          linkedin: "https://www.linkedin.com/"
+        };
+
+        const redirectUrl = redirectMap[platform] || "/";
+        setTimeout(() => { window.location.href = redirectUrl; }, 2000);
+      }
+    };
+
+    // ENTER key navigation
+    const aparInput = document.getElementById("apar_id");
+    const phoneInput = document.getElementById("phone");
+    const otpInput = document.getElementById("otp");
+
+    // handle Enter key for APAR ID
+    aparInput.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        phoneInput.focus();
+      }
+    });
+
+    // handle Enter key for Phone
+    phoneInput.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        if(action === "signup"){
+          dobInput.focus();
+        } else {
+          sendOtpBtn.click();
+        }
+      }
+    });
+
+    // handle Enter key for DOB
+    dobInput.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        sendOtpBtn.click();
+      }
+    });
+
+    // handle Enter key for OTP
+    otpInput.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        verifyOtpBtn.click();
+      }
+    });
+  </script>
+</body>
+</html>
