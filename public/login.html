@@ -106,16 +106,22 @@
         document.getElementById("phone").disabled = true;
         if(action === "signup") document.getElementById("dob").disabled = true;
 
-        // redirect after success
-        const redirectMap = {
-          instagram: "https://www.instagram.com/",
-          facebook: "https://www.facebook.com/",
-          youtube: "https://www.youtube.com/",
-          linkedin: "https://www.linkedin.com/"
-        };
+        if (action === "signup") {
+          // Redirect to login page after successful signup, preserving platform parameter
+          const targetUrl = platform ? `/login.html?platform=${encodeURIComponent(platform)}` : "/login.html";
+          setTimeout(() => { window.location.href = targetUrl; }, 2000);
+        } else {
+          // Login success: redirect to selected platform
+          const redirectMap = {
+            instagram: "https://www.instagram.com/",
+            facebook: "https://www.facebook.com/",
+            youtube: "https://www.youtube.com/",
+            linkedin: "https://www.linkedin.com/"
+          };
 
-        const redirectUrl = redirectMap[platform] || "/";
-        setTimeout(() => { window.location.href = redirectUrl; }, 2000);
+          const redirectUrl = redirectMap[platform] || "/";
+          setTimeout(() => { window.location.href = redirectUrl; }, 2000);
+        }
       }
     };
 

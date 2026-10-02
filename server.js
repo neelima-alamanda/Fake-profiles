@@ -11,6 +11,15 @@ const PORT = process.env.PORT || 3000;
 app.use(express.json());
 app.use(express.static(path.join(__dirname, "public")));
 
+// Redirect /signup.html to /login.html preserving platform query parameter
+app.get("/signup.html", (req, res) => {
+  const platform = req.query.platform;
+  const targetUrl = platform
+    ? `/login.html?platform=${encodeURIComponent(platform)}`
+    : "/login.html";
+  res.redirect(targetUrl);
+});
+
 // PostgreSQL connection
 const poolConfig = process.env.DATABASE_URL
   ? {
