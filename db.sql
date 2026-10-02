@@ -1,0 +1,9 @@
+-- APAAR Authentication Database Schema
+
+CREATE TABLE IF NOT EXISTS users (
+    id SERIAL PRIMARY KEY,
+    apar_id VARCHAR(12) UNIQUE NOT NULL,
+    phone VARCHAR(10) UNIQUE NOT NULL,
+    dob DATE NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
