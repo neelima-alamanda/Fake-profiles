@@ -12,13 +12,20 @@ app.use(express.json());
 app.use(express.static(path.join(__dirname, "public")));
 
 // PostgreSQL connection
-const pool = new Pool({
-  user: process.env.DB_USER,
-  host: process.env.DB_HOST,
-  database: process.env.DB_NAME,
-  password: process.env.DB_PASSWORD,
-  port: Number(process.env.DB_PORT),
-});
+const poolConfig = process.env.DATABASE_URL
+  ? {
+      connectionString: process.env.DATABASE_URL,
+      ssl: { rejectUnauthorized: false },
+    }
+  : {
+      user: process.env.DB_USER,
+      host: process.env.DB_HOST,
+      database: process.env.DB_NAME,
+      password: process.env.DB_PASSWORD,
+      port: Number(process.env.DB_PORT),
+    };
+
+const pool = new Pool(poolConfig);
 
 // Twilio Verify client (initialized conditionally so AUTH_MODE=demo can start without Twilio credentials)
 const authMode = process.env.AUTH_MODE || "twilio";
