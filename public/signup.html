@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>APAR Authentication</title>
+  <title>APAR Authentication - Signup</title>
   <style>
     * { box-sizing: border-box; margin:0; padding:0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
     body { background-color:#000; color:white; display:flex; justify-content:center; align-items:center; height:100vh; }
@@ -20,13 +20,13 @@
 </head>
 <body>
   <div class="container">
-    <h2 id="formTitle">Login</h2>
-    <div id="actionToggle">No account? <span style="color:#6ec7e0;" onclick="goToSignup()">Signup</span></div>
+    <h2 id="formTitle">Signup</h2>
+    <div id="actionToggle">Already have an account? <span style="color:#6ec7e0;" onclick="goToLogin()">Login</span></div>
 
     <form id="authForm">
       <input type="text" id="apar_id" placeholder="Enter APAAR ID" />
       <input type="text" id="phone" placeholder="Enter Phone Number" />
-      <input type="date" id="dob" placeholder="Enter DOB" style="display:none;" />
+      <input type="date" id="dob" placeholder="Enter DOB" />
       <button type="button" id="sendOtpBtn">Send OTP</button>
 
       <div id="otpSection">
@@ -39,33 +39,19 @@
   </div>
 
   <script>
-    let action = "login"; // default action on login page
     const sendOtpBtn = document.getElementById("sendOtpBtn");
     const verifyOtpBtn = document.getElementById("verifyOtpBtn");
     const otpSection = document.getElementById("otpSection");
     const message = document.getElementById("message");
-    const formTitle = document.getElementById("formTitle");
     const dobInput = document.getElementById("dob");
-    const actionToggle = document.getElementById("actionToggle");
 
     // get platform from query string
     const urlParams = new URLSearchParams(window.location.search);
     const platform = urlParams.get("platform");
 
-    function goToSignup() {
-      const targetUrl = platform ? `/signup.html?platform=${encodeURIComponent(platform)}` : "/signup.html";
+    function goToLogin() {
+      const targetUrl = platform ? `/login.html?platform=${encodeURIComponent(platform)}` : "/login.html";
       window.location.href = targetUrl;
-    }
-
-    function toggleAction() {
-      action = action === "login" ? "signup" : "login";
-      formTitle.innerText = action === "login" ? "Login" : "Signup";
-      dobInput.style.display = action === "login" ? "none" : "block";
-      actionToggle.innerHTML = action === "login" ? 
-        'No account? <span style="color:#6ec7e0;" onclick="goToSignup()">Signup</span>' : 
-        'Already have an account? <span style="color:#6ec7e0;" onclick="toggleAction()">Login</span>';
-      message.innerText = "";
-      otpSection.style.display = "none";
     }
 
     sendOtpBtn.onclick = async () => {
@@ -75,7 +61,7 @@
 
       if (!/^\d{12}$/.test(apar_id)) { message.innerText = "APAR ID must be 12 digits"; return; }
       if (!/^\d{10}$/.test(phone)) { message.innerText = "Phone number must be 10 digits"; return; }
-      if (action === "signup" && (!dob || new Date().getFullYear() - new Date(dob).getFullYear() < 15)) {
+      if (!dob || new Date().getFullYear() - new Date(dob).getFullYear() < 15) {
         message.innerText = "Age must be at least 15";
         return;
       }
@@ -83,7 +69,7 @@
       const res = await fetch("/send-otp", {
         method:"POST",
         headers:{"Content-Type":"application/json"},
-        body: JSON.stringify({ apar_id, phone, dob, action })
+        body: JSON.stringify({ apar_id, phone, dob, action: "signup" })
       });
       const data = await res.json();
       message.innerText = data.message;
@@ -99,7 +85,7 @@
       const res = await fetch("/verify-otp", {
         method:"POST",
         headers:{"Content-Type":"application/json"},
-        body: JSON.stringify({ apar_id, phone, otp, dob, action })
+        body: JSON.stringify({ apar_id, phone, otp, dob, action: "signup" })
       });
       const data = await res.json();
       message.innerText = data.message;
@@ -109,24 +95,11 @@
         sendOtpBtn.disabled = true;
         document.getElementById("apar_id").disabled = true;
         document.getElementById("phone").disabled = true;
-        if(action === "signup") document.getElementById("dob").disabled = true;
+        document.getElementById("dob").disabled = true;
 
-        if (action === "signup") {
-          // Redirect to login page after successful signup, preserving platform parameter
-          const targetUrl = platform ? `/login.html?platform=${encodeURIComponent(platform)}` : "/login.html";
-          setTimeout(() => { window.location.href = targetUrl; }, 2000);
-        } else {
-          // Login success: redirect to selected platform
-          const redirectMap = {
-            instagram: "https://www.instagram.com/",
-            facebook: "https://www.facebook.com/",
-            youtube: "https://www.youtube.com/",
-            linkedin: "https://www.linkedin.com/"
-          };
-
-          const redirectUrl = redirectMap[platform] || "/";
-          setTimeout(() => { window.location.href = redirectUrl; }, 2000);
-        }
+        // Redirect to login page after successful signup, preserving platform parameter
+        const targetUrl = platform ? `/login.html?platform=${encodeURIComponent(platform)}` : "/login.html";
+        setTimeout(() => { window.location.href = targetUrl; }, 2000);
       }
     };
 
@@ -147,11 +120,7 @@
     phoneInput.addEventListener("keydown", (e) => {
       if (e.key === "Enter") {
         e.preventDefault();
-        if(action === "signup"){
-          dobInput.focus();
-        } else {
-          sendOtpBtn.click();
-        }
+        dobInput.focus();
       }
     });
 
